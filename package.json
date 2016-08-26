@@ -1,0 +1,23 @@
+{
+  "name": "gate-keeper",
+  "version": "1.0.0",
+  "description": "No matter how many processes are requesting a resource, only make one request at a time",
+  "main": "index.js",
+  "scripts": {
+    "test": "tape test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TehShrike/gate-keeper.git"
+  },
+  "keywords": [
+    "async",
+    "mutex"
+  ],
+  "author": "TehShrike",
+  "license": "WTFPL",
+  "bugs": {
+    "url": "https://github.com/TehShrike/gate-keeper/issues"
+  },
+  "homepage": "https://github.com/TehShrike/gate-keeper#readme"
+}
