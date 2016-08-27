@@ -43,7 +43,7 @@ get.isCurrentlyGetting() // => true
 
 # API
 
-## `gateKeeper(asyncGetterFunction)`
+## `const get = gateKeeper(asyncGetterFunction)`
 
 Returns a `get` function that you can use whenever you want to trigger calling `asyncGetterFunction`.
 

@@ -1,7 +1,7 @@
 {
   "name": "gate-keeper",
   "version": "1.0.0",
-  "description": "No matter how many processes are requesting a resource, only make one request at a time",
+  "description": "No matter how frequently you request a resource, only make one request at a time",
   "main": "index.js",
   "scripts": {
     "test": "tape test.js && jsmd readme.md"
