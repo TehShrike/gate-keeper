@@ -7,7 +7,7 @@ Pairs very well with the [key-master](https://github.com/TehShrike/key-master).
 # Install
 
 ```sh
-npm install just-flatten
+npm install gate-keeper
 ```
 
 `var gateKeeper = require('gate-keeper')`
