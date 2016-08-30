@@ -14,21 +14,29 @@ module.exports = function GateKeeper(asyncGetter) {
 
 		if (!inProgress) {
 			let done = false
+			inProgress = true
+
 			function resetAndForgetThisRequest() {
 				if (!done) {
 					done = true
 					reset()
 				}
 			}
-			cancel = resetAndForgetThisRequest
-			inProgress = true
-			process.nextTick(() => asyncGetter((...args) => {
+
+			function getterCallback(...args) {
 				if (!done) {
 					const lastQueue = queue
 					resetAndForgetThisRequest()
 					lastQueue.forEach(cb => process.nextTick(() => cb.apply(null, args)))
 				}
-			}))
+			}
+
+			getterCallback.isCancelled = function isCancelled() {
+				return done
+			}
+
+			cancel = resetAndForgetThisRequest
+			process.nextTick(() => asyncGetter(getterCallback))
 		}
 	}
 

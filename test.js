@@ -135,9 +135,7 @@ test(`calling the callback multiple times is ignored`, t => {
 		}
 	})
 
-	let called = 0
 	function onlyTheFirstValue(value) {
-		called++
 		t.equal(value, 'yup')
 	}
 
@@ -147,4 +145,16 @@ test(`calling the callback multiple times is ignored`, t => {
 	setTimeout(() => {
 		get(onlyTheFirstValue)
 	}, 10)
+})
+
+test(`isCancelled method exposed to inner function`, t => {
+	const get = gateKeeper(cb => {
+		t.equal(cb.isCancelled(), false)
+		setTimeout(() => {
+			t.equal(cb.isCancelled(), true)
+			t.end()
+		}, 100)
+	})
+	get(value => value)
+	setTimeout(() => get.cancel(), 20)
 })

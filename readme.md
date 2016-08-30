@@ -24,6 +24,7 @@ const get = gateKeeper(function getSomeRemoteResource(cb) {
 	calledAlready // => false
 	calledAlready = true
 	setTimeout(function() {
+		cb.isCancelled() // => false
 		cb(null, 'A successful value')
 	}, 50)
 })
@@ -48,6 +49,8 @@ get.isCurrentlyGetting() // => true
 Returns a `get` function that you can use whenever you want to trigger calling `asyncGetterFunction`.
 
 `asyncGetterFunction` will be passed a callback.  Until the callback is called, `asyncGetterFunction` will not be called again.
+
+The callback function has a property named `isCancelled`, a function you can call that returns `true` or `false` depending on whether or not the gatekeeper's `cancel` method was called while the request was running.
 
 ### `get(callback)`
 
