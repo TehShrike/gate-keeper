@@ -4,10 +4,13 @@
   "description": "No matter how frequently you request a resource, only make one request at a time",
   "main": "index.js",
   "engines": {
-    "node": ">=4.0.0"
+    "node": ">=6.0.0"
   },
   "scripts": {
-    "test": "tape test.js && jsmd readme.md"
+    "test": "npm run node-test && npm run browser-test && npm run documentation-test",
+    "browser-test": "browserify test.js | tape-run",
+    "documentation-test": "jsmd readme.md",
+    "node-test": "tape test.js"
   },
   "repository": {
     "type": "git",
@@ -28,7 +31,8 @@
     "babelify": "7.3.0",
     "jsmd": "0.3.1",
     "key-master": "~2.0.0",
-    "tape": "4.6.0"
+    "tape": "4.6.0",
+    "tape-run": "2.1.4"
   },
   "browserify": {
     "transform": [
