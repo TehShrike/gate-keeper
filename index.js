@@ -1,3 +1,5 @@
+'use strict'
+
 module.exports = function GateKeeper(asyncGetter) {
 	let inProgress = false
 	let queue = []
