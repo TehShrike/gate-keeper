@@ -1,6 +1,8 @@
 'use strict'
 
 const unresolvablePromise = new Promise(() => {})
+const noop = () => {}
+const identity = value => value
 
 module.exports = function GateKeeper(asyncGetter) {
 	let inProgress = false
@@ -27,31 +29,26 @@ module.exports = function GateKeeper(asyncGetter) {
 
 			const isCancelled = () => done
 
+			function makeResponseHandler(makeResponse = identity) {
+				return value => {
+					const cancelled = isCancelled()
+					resetAndForgetThisRequest()
+					return cancelled ? unresolvablePromise : makeResponse(value)
+				}
+			}
+
 			cancel = resetAndForgetThisRequest
+
 			promise = asyncGetter({ isCancelled })
-				.then(value => {
-					const cancelled = isCancelled()
-					resetAndForgetThisRequest()
-					return cancelled ? unresolvablePromise : value
-				})
-				.catch(error => {
-					const cancelled = isCancelled()
-					resetAndForgetThisRequest()
-					return cancelled ? unresolvablePromise : Promise.reject(error)
-				})
+				.then(makeResponseHandler())
+				.catch(makeResponseHandler(error => Promise.reject(error)))
 		}
 
 		return promise
 	}
 
-	function isCurrentlyGetting() {
-		return inProgress
-	}
-
-	get.isCurrentlyGetting = isCurrentlyGetting
+	get.isCurrentlyGetting = () => inProgress
 	get.cancel = () => cancel()
 
 	return get
 }
-
-function noop() {}
