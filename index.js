@@ -1,22 +1,22 @@
 'use strict'
 
+const unresolvablePromise = new Promise(() => {})
+
 module.exports = function GateKeeper(asyncGetter) {
 	let inProgress = false
-	let queue = []
+	let promise = null
 	let cancel = noop
 
 	function reset() {
 		inProgress = false
-		queue = []
+		promise = null
 		cancel = noop
 	}
 
-	function get(cb) {
-		queue.push(cb)
-
+	function get() {
 		if (!inProgress) {
-			let done = false
 			inProgress = true
+			let done = false
 
 			function resetAndForgetThisRequest() {
 				if (!done) {
@@ -25,21 +25,23 @@ module.exports = function GateKeeper(asyncGetter) {
 				}
 			}
 
-			function getterCallback(...args) {
-				if (!done) {
-					const lastQueue = queue
-					resetAndForgetThisRequest()
-					lastQueue.forEach(cb => process.nextTick(() => cb.apply(null, args)))
-				}
-			}
-
-			getterCallback.isCancelled = function isCancelled() {
-				return done
-			}
+			const isCancelled = () => done
 
 			cancel = resetAndForgetThisRequest
-			process.nextTick(() => asyncGetter(getterCallback))
+			promise = asyncGetter({ isCancelled })
+				.then(value => {
+					const cancelled = isCancelled()
+					resetAndForgetThisRequest()
+					return cancelled ? unresolvablePromise : value
+				})
+				.catch(error => {
+					const cancelled = isCancelled()
+					resetAndForgetThisRequest()
+					return cancelled ? unresolvablePromise : Promise.reject(error)
+				})
 		}
+
+		return promise
 	}
 
 	function isCurrentlyGetting() {
