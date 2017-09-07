@@ -1,6 +1,6 @@
 {
   "name": "gate-keeper",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "description": "No matter how frequently you request a resource, only make one request at a time",
   "main": "build.js",
   "engines": {
