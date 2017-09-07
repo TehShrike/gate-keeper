@@ -1,22 +1,24 @@
 'use strict'
 
+const unresolvablePromise = new Promise(() => {})
+const noop = () => {}
+const identity = value => value
+
 module.exports = function GateKeeper(asyncGetter) {
 	let inProgress = false
-	let queue = []
+	let promise = null
 	let cancel = noop
 
 	function reset() {
 		inProgress = false
-		queue = []
+		promise = null
 		cancel = noop
 	}
 
-	function get(cb) {
-		queue.push(cb)
-
+	function get() {
 		if (!inProgress) {
-			let done = false
 			inProgress = true
+			let done = false
 
 			function resetAndForgetThisRequest() {
 				if (!done) {
@@ -25,31 +27,28 @@ module.exports = function GateKeeper(asyncGetter) {
 				}
 			}
 
-			function getterCallback(...args) {
-				if (!done) {
-					const lastQueue = queue
+			const isCancelled = () => done
+
+			function makeResponseHandler(makeResponse = identity) {
+				return value => {
+					const cancelled = isCancelled()
 					resetAndForgetThisRequest()
-					lastQueue.forEach(cb => process.nextTick(() => cb.apply(null, args)))
+					return cancelled ? unresolvablePromise : makeResponse(value)
 				}
 			}
 
-			getterCallback.isCancelled = function isCancelled() {
-				return done
-			}
-
 			cancel = resetAndForgetThisRequest
-			process.nextTick(() => asyncGetter(getterCallback))
+
+			promise = asyncGetter({ isCancelled })
+				.then(makeResponseHandler())
+				.catch(makeResponseHandler(error => Promise.reject(error)))
 		}
+
+		return promise
 	}
 
-	function isCurrentlyGetting() {
-		return inProgress
-	}
-
-	get.isCurrentlyGetting = isCurrentlyGetting
+	get.isCurrentlyGetting = () => inProgress
 	get.cancel = () => cancel()
 
 	return get
 }
-
-function noop() {}

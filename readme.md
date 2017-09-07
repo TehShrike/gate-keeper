@@ -2,6 +2,8 @@ The gate-keeper!
 
 If you have some remote resource you want to fetch, and you could be requesting a bunch of times, you probably don't need more than one request going at a time.
 
+This library uses Promises.  For the callback version, see the [1.x branch](https://github.com/TehShrike/gate-keeper/tree/1.x).
+
 Pairs very well with the [key-master](https://github.com/TehShrike/key-master).
 
 # Install
@@ -10,30 +12,36 @@ Pairs very well with the [key-master](https://github.com/TehShrike/key-master).
 npm install gate-keeper
 ```
 
-`var gateKeeper = require('gate-keeper')`
+`const gateKeeper = require('gate-keeper')`
 
 # Example
 
 <!-- js
-var gateKeeper = require('./')
+const gateKeeper = require('./')
 -->
 
 ```js
 let calledAlready = false
-const get = gateKeeper(function getSomeRemoteResource(cb) {
+const get = gateKeeper(function getSomeRemoteResource({ isCancelled }) {
+	// this function will only be called once, and in this example
+	// won't be called again afterward.
 	calledAlready // => false
+	
 	calledAlready = true
-	setTimeout(function() {
-		cb.isCancelled() // => false
-		cb(null, 'A successful value')
-	}, 50)
+	
+	return new Promise(resolve => {
+		setTimeout(function() {
+			isCancelled() // => false
+			resolve('A successful value')
+		}, 50)
+	})
 })
 
-get((err, value) => {
+get().then(value => {
 	// err => null
 	// value => 'A successful value'
 })
-get((err, value) => {
+get().then(value => {
 	// value => 'A successful value'
 	get.isCurrentlyGetting() // => false
 })
@@ -48,13 +56,13 @@ get.isCurrentlyGetting() // => true
 
 Returns a `get` function that you can use whenever you want to trigger calling `asyncGetterFunction`.
 
-`asyncGetterFunction` will be passed a callback.  Until the callback is called, `asyncGetterFunction` will not be called again.
+`asyncGetterFunction` should return a promise.  Until that promise is resolved or rejected, `asyncGetterFunction` will not be called again.
 
-The callback function has a property named `isCancelled`, a function you can call that returns `true` or `false` depending on whether or not the gatekeeper's `cancel` method was called while the request was running.
+Your `asyncGetterFunction` function will be passed an object with a property named `isCancelled`, a function you can call that returns `true` or `false` depending on whether or not the gatekeeper's `cancel` method was called while the request was running.
 
-### `get(callback)`
+### `get()`
 
-Triggers the `asyncGetterFunction`, or if it is already in progress, waits for the response.  The `callback` is passed whatever values the `asyncGetterFunction` returns.
+Triggers the `asyncGetterFunction` if it is not running already.  Returns the promise associated with the currently-running getter.
 
 ### `get.isCurrentlyGetting()`
 
@@ -62,7 +70,7 @@ Returns `true` if the `asyncGetterFunction` is in progress, `false` otherwise.
 
 ### `get.cancel()`
 
-If the `asyncGetterFunction` is in progress, its results are ignored.  No previous `get` calls will have their callbacks called.
+If the `asyncGetterFunction` is in progress, its results are ignored.  Promises that are unresolved when `cancel` is called will never resolve.
 
 # Using with the key-master
 
@@ -71,9 +79,7 @@ Because you probably have more than one remote resource you could be fetching.
 ```js
 const keyMaster = require('key-master')
 
-const fetchers = keyMaster(key => gateKeeper(cb => {
-	setTimeout(() => cb(key + ' is awesome!'), 50)
-}))
+const fetchers = keyMaster(key => gateKeeper(() => Promise.resolve(key + ' is awesome!')))
 
 fetchers.get('pie')(value => {
 	value // => 'pie is awesome!'
