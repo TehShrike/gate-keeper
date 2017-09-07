@@ -23,8 +23,12 @@ const gateKeeper = require('./')
 ```js
 let calledAlready = false
 const get = gateKeeper(function getSomeRemoteResource({ isCancelled }) {
+	// this function will only be called once, and in this example
+	// won't be called again afterward.
 	calledAlready // => false
+	
 	calledAlready = true
+	
 	return new Promise(resolve => {
 		setTimeout(function() {
 			isCancelled() // => false
