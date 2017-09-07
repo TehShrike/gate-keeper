@@ -22,12 +22,12 @@ const gateKeeper = require('./')
 
 ```js
 let calledAlready = false
-const get = gateKeeper(function getSomeRemoteResource(state) {
+const get = gateKeeper(function getSomeRemoteResource({ isCancelled }) {
 	calledAlready // => false
 	calledAlready = true
 	return new Promise(resolve => {
 		setTimeout(function() {
-			state.isCancelled() // => false
+			isCancelled() // => false
 			resolve('A successful value')
 		}, 50)
 	})
